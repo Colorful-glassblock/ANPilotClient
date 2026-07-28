@@ -1,8 +1,31 @@
-# ANPilotClient
+# <img src="src/main/resources/assets/anpilotclient/anpilot.png" alt="ANPilotClient Icon" width="108" align="center" /> ANPilotClient
 
 ANPilotClient 是一个基于 Fabric 与 Kotlin 开发的 Minecraft 客户端 Mod，包含战斗、移动、渲染、HUD、玩家辅助和自动建造等模块。
 
-本项目主要用于个人学习、开发测试与客户端功能实验。使用时请遵守目标服务器规则以及相关平台条款。
+本项目主要用于个人学习、开发测试与客户端功能实验
+使用时请遵守目标服务器规则以及相关平台条款!
+
+## 链接
+
+| B站主页 | [点击访问](https://b23.tv/QC32wv4) 
+
+| 个人网站 | [点击访问](AnMakerLab.cn) 
+
+## 功能概览
+
+| 主要功能 | 主要功能 | 主要功能 | 主要功能 |
+| --- | --- | --- | --- |
+| KillAura 击杀光环 | AutoBuild 自动建造 | AutoCrystal 自动水晶 | AutoTotem 自动图腾 |
+| AutoMine 自动挖掘 | AutoTool 自动工具 | AutoEat 自动进食 | AutoFish 自动钓鱼 |
+| AutoElytra 自动鞘翅 | AutoEnchant 自动附魔 | BaseFinder 基地搜索 | ElytraPilotPlus 鞘翅飞行 |
+| FlyTo 坐标飞行 | XRay 矿物透视 | ESP 实体透视 | BlockESP 方块透视 |
+| StorageESP 容器透视 | NameTags 名称标签 | Freecam 灵魂出窍 | ScaffoldPlus 自动搭路 |
+
+## GUI 预览
+
+| 主界面 | GUI 界面 |
+| --- | --- |
+| ![ANPilotClient 主界面](src/main/resources/assets/anpilotclient/屏幕截图%202026-07-28%20220913.png) | ![ANPilotClient GUI 界面](src/main/resources/assets/anpilotclient/屏幕截图%202026-07-28%20221103.png) |
 
 ## 环境要求
 
@@ -26,8 +49,6 @@ Linux / macOS:
 ./gradlew build
 ```
 
-构建产物位于 `build/libs/`。
-
 ## 开发
 
 推荐使用 IntelliJ IDEA 打开项目，并等待 Gradle 同步完成。
@@ -41,16 +62,10 @@ Linux / macOS:
 
 ## 依赖
 
-项目通过 Gradle 拉取主要依赖:
-
-- Minecraft
-- Fabric Loader
-- Fabric API
+项目主要依赖:
 - Fabric Language Kotlin
 - Sodium
 - Baritone API
-
-请不要将第三方依赖 Jar 直接提交到仓库。
 
 ## 许可证
 
