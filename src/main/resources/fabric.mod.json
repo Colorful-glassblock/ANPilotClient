@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "anpilotclient",
+	"version": "${version}",
+	"name": "ANPilotClient",
+	"description": "A Utility Mod By AN!",
+	"authors": [
+		"AN-G!"
+	],
+	"contact": {
+		"homepage": "https://AnMakerLab.cn/"
+	},
+	"license": "GPL-3.0-only",
+	"icon": "assets/anpilotclient/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			{
+				"value": "anpilot.client.ANPilotClient",
+				"adapter": "kotlin"
+			}
+		]
+	},
+	"mixins": [
+		"anpilotclient.mixins.json"
+	],
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "~26.1.2",
+		"java": ">=25",
+		"fabric-api": "*",
+		"fabric-language-kotlin": "*"
+	}
+}
