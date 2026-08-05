@@ -22,6 +22,8 @@ import javax.imageio.ImageIO
 class ANClickGuiImpl(private val moduleRegistry: ANModuleRegistry) : ANClickGui {
     private var panels: MutableList<ANCategoryPanel>? = null
     private var hudOnly = false
+    private var backgroundFullscreen = false
+    private var fullscreenButtonBounds: Rect? = null
 
     private companion object {
         private val FALLBACK_BACKGROUND_IMAGE = Identifier.fromNamespaceAndPath("anpilotclient", "textures/customimage/anpilotclient.png")
@@ -34,6 +36,11 @@ class ANClickGuiImpl(private val moduleRegistry: ANModuleRegistry) : ANClickGui 
         private const val MAX_CATEGORY_WIDTH = 126f
         private const val BASE_PANEL_WIDTH = 660f
         private const val HEADER_SAFE_HEIGHT = 40f
+        private const val FULLSCREEN_BUTTON_WIDTH = 14f
+        private const val FULLSCREEN_BUTTON_HEIGHT = 8f
+        private const val FULLSCREEN_BUTTON_MARGIN = 2f
+        private const val FULLSCREEN_HOVER_ZONE_WIDTH = 36f
+        private const val FULLSCREEN_HOVER_ZONE_HEIGHT = 42f
         private var loadedBackgroundFile: File? = null
         private var loadedBackgroundModified = -1L
     }
@@ -60,9 +67,21 @@ class ANClickGuiImpl(private val moduleRegistry: ANModuleRegistry) : ANClickGui 
         val outerPadding = OUTER_PADDING * layoutScale
         val panelX = (context.width - panelWidth) / 2f
         val panelY = (context.height - panelHeight) / 2f
+        var backgroundBounds: Rect? = null
 
         if (!hudOnly) {
-            context.imageRect(backgroundImage(), panelX, panelY, panelWidth, panelHeight, ANTheme.BgTint)
+            backgroundBounds = backgroundBounds(context, panelX, panelY, panelWidth, panelHeight)
+            context.roundedImageRect(
+                backgroundImage(),
+                backgroundBounds.x,
+                backgroundBounds.y,
+                backgroundBounds.width,
+                backgroundBounds.height,
+                if (backgroundFullscreen) 0f else ANTheme.BgRadius,
+                ANTheme.BgTint
+            )
+        } else {
+            fullscreenButtonBounds = null
         }
 
         val contentX = if (hudOnly) (context.width - outerPadding - grid.categoryWidth).coerceAtLeast(outerPadding) else panelX + outerPadding
@@ -70,9 +89,14 @@ class ANClickGuiImpl(private val moduleRegistry: ANModuleRegistry) : ANClickGui 
         val guiPanels = panels ?: createPanels(categories).also { panels = it }
         layoutPanels(guiPanels, contentX, contentY, grid, layoutScale)
         guiPanels.forEach { it.render(context, mouseX, mouseY, deltaTicks) }
+        backgroundBounds?.let { drawFullscreenButton(context, mouseX, mouseY, it) }
     }
 
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
+        if (button == 0 && fullscreenButtonBounds?.contains(mouseX, mouseY) == true) {
+            backgroundFullscreen = !backgroundFullscreen
+            return true
+        }
         panels?.forEach { if (it.mouseClicked(mouseX, mouseY, button)) return true }
         return false
     }
@@ -99,6 +123,7 @@ class ANClickGuiImpl(private val moduleRegistry: ANModuleRegistry) : ANClickGui 
 
     override fun resetView() {
         hudOnly = false
+        backgroundFullscreen = false
         panels = null
     }
 
@@ -138,8 +163,49 @@ class ANClickGuiImpl(private val moduleRegistry: ANModuleRegistry) : ANClickGui 
     private fun onModulePrimaryClick(module: ANBaseModule): Boolean {
         if (module !is ANPilotHud) return false
         hudOnly = true
+        backgroundFullscreen = false
+        fullscreenButtonBounds = null
         panels = null
         return true
+    }
+
+    private fun backgroundBounds(context: ANGuiRenderContext, panelX: Float, panelY: Float, panelWidth: Float, panelHeight: Float): Rect {
+        return if (backgroundFullscreen) {
+            Rect(0f, 0f, context.width.toFloat(), context.height.toFloat())
+        } else {
+            Rect(panelX, panelY, panelWidth, panelHeight)
+        }
+    }
+
+    private fun drawFullscreenButton(context: ANGuiRenderContext, mouseX: Int, mouseY: Int, backgroundBounds: Rect) {
+        val hoverZone = Rect(
+            backgroundBounds.x + backgroundBounds.width - FULLSCREEN_HOVER_ZONE_WIDTH,
+            backgroundBounds.y,
+            FULLSCREEN_HOVER_ZONE_WIDTH,
+            FULLSCREEN_HOVER_ZONE_HEIGHT
+        )
+        if (!hoverZone.contains(mouseX.toDouble(), mouseY.toDouble())) {
+            fullscreenButtonBounds = null
+            return
+        }
+
+        val buttonX = backgroundBounds.x + backgroundBounds.width - FULLSCREEN_BUTTON_WIDTH - FULLSCREEN_BUTTON_MARGIN
+        val buttonY = backgroundBounds.y + FULLSCREEN_BUTTON_MARGIN
+        val bounds = Rect(buttonX, buttonY, FULLSCREEN_BUTTON_WIDTH, FULLSCREEN_BUTTON_HEIGHT)
+        fullscreenButtonBounds = bounds
+
+        val buttonHovered = bounds.contains(mouseX.toDouble(), mouseY.toDouble())
+        val fill = if (buttonHovered) ANTheme.BtnHoverFill else ANTheme.SetCtrlFill
+        val border = if (buttonHovered) ANTheme.SetAccent else ANTheme.SetCtrlBorder
+        val label = if (backgroundFullscreen) "R" else "F"
+        context.borderedRoundedRect(buttonX, buttonY, FULLSCREEN_BUTTON_WIDTH, FULLSCREEN_BUTTON_HEIGHT, 3f, 0.7f, fill, border)
+        context.text(
+            label,
+            buttonX + FULLSCREEN_BUTTON_WIDTH / 2f - context.textWidth(label, 0.42f) / 2f,
+            buttonY + 2f,
+            ANTheme.SetText.rgb,
+            0.42f
+        )
     }
 
     private fun backgroundImage(): Identifier {
@@ -234,5 +300,10 @@ class ANClickGuiImpl(private val moduleRegistry: ANModuleRegistry) : ANClickGui 
 
     private data class GridLayout(val columns: Int, val rows: Int, val categoryWidth: Float, val categoryHeight: Float)
 
-}
+    private data class Rect(val x: Float, val y: Float, val width: Float, val height: Float) {
+        fun contains(pointX: Double, pointY: Double): Boolean {
+            return pointX >= x && pointX <= x + width && pointY >= y && pointY <= y + height
+        }
+    }
 
+}

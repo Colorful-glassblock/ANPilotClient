@@ -48,6 +48,7 @@ object ANConfigManager {
     private val customFolder: File get() = File(mainFolder, "Custom")
     private val customSoundsFolder: File get() = File(customFolder, "Sounds")
     private val customBackgroundFolder: File get() = File(customFolder, "BackGround")
+    private val customDecorFolder: File get() = File(customFolder, "Decor")
     private val filesFolder: File get() = File(mainFolder, "Files")
     private val elytraFilesFolder: File get() = File(filesFolder, "Elytra")
     private val baseFinderFolder: File get() = File(filesFolder, "BaseFinder")
@@ -111,6 +112,26 @@ object ANConfigManager {
     fun customBackgroundFolder(): File {
         createDirs()
         return customBackgroundFolder
+    }
+
+    fun customDecorFolder(): File {
+        createDirs()
+        return customDecorFolder
+    }
+
+    fun customDecorFileNames(): List<String> {
+        createDirs()
+        return customDecorFolder.listFiles()
+            ?.filter { it.isFile && it.extension.lowercase() in DECOR_IMAGE_EXTENSIONS }
+            ?.map { it.name }
+            ?.sorted()
+            ?: emptyList()
+    }
+
+    fun customDecorFile(name: String): File {
+        createDirs()
+        val clean = cleanName(name).ifBlank { customDecorFileNames().firstOrNull().orEmpty() }
+        return File(customDecorFolder, clean)
     }
 
     fun baseFinderSessionFile(): File {
@@ -440,6 +461,7 @@ object ANConfigManager {
             customFolder,
             customSoundsFolder,
             customBackgroundFolder,
+            customDecorFolder,
             filesFolder,
             elytraFilesFolder,
             baseFinderFolder,
@@ -449,6 +471,8 @@ object ANConfigManager {
             otherFolder
         ).forEach { it.mkdirs() }
     }
+
+    private val DECOR_IMAGE_EXTENSIONS = setOf("png", "jpg", "jpeg")
 
     private fun configFile(name: String): File = File(configsFolder, "${cleanName(name)}.ANPilot")
 

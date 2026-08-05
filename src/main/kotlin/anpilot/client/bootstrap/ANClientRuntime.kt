@@ -6,7 +6,7 @@ import anpilot.client.api.module.ANModuleRegistry
 import anpilot.client.features.event.ANEventBusImpl
 import anpilot.client.features.gui.ANClickGuiImpl
 import anpilot.client.features.manager.ANConfigManager
-import anpilot.client.features.manager.RotationManager
+import anpilot.client.features.manager.ANRotationManager
 import anpilot.client.features.module.ANModuleManager
 
 class ANClientRuntime(
@@ -14,7 +14,7 @@ class ANClientRuntime(
     val moduleRegistry: ANModuleRegistry,
     val clickGui: ANClickGui,
     val eventBus: ANEventBus,
-    val rotationManager: RotationManager
+    val rotationManager: ANRotationManager
 ) {
     companion object {
         fun createDefault(): ANClientRuntime {
@@ -26,7 +26,7 @@ class ANClientRuntime(
                 moduleRegistry = moduleManager,
                 clickGui = ANClickGuiImpl(moduleManager),
                 eventBus = ANEventBusImpl(),
-                rotationManager = RotationManager()
+                rotationManager = ANRotationManager()
             )
         }
     }

@@ -1,6 +1,7 @@
 package anpilot.client.api.gui
 
 import net.minecraft.client.gui.navigation.ScreenRectangle
+import anpilot.client.renderer.render.ANProceduralDecorRenderer
 import net.minecraft.resources.Identifier
 import net.minecraft.world.entity.LivingEntity
 import net.minecraft.world.item.ItemStack
@@ -20,6 +21,8 @@ interface ANGuiRenderContext {
 
     fun imageRect(texture: Identifier, x: Float, y: Float, width: Float, height: Float, color: Color)
 
+    fun roundedImageRect(texture: Identifier, x: Float, y: Float, width: Float, height: Float, radius: Float, color: Color)
+
     fun head(skin: PlayerSkin, x: Float, y: Float, size: Float, color: Color = Color.WHITE)
 
     fun playerModel(x: Int, y: Int, width: Int, height: Int, size: Int, mouseX: Float, mouseY: Float, entity: LivingEntity)
@@ -37,6 +40,8 @@ interface ANGuiRenderContext {
     fun glowingRoundedRect(x: Float, y: Float, width: Float, height: Float, radius: Float, color: Color, glowRadius: Float, glowColor: Color)
 
     fun roundedRectWithGlow(x: Float, y: Float, width: Float, height: Float, radius: Float, borderWidth: Float, fillColor: Color, borderColor: Color, glowRadius: Float, glowColor: Color)
+
+    fun roundedBorderDecor(texture: Identifier, x: Float, y: Float, width: Float, height: Float, radius: Float, options: ANProceduralDecorRenderer.RoundedBorderDecorOptions)
 
     fun text(text: String, x: Float, y: Float, color: Int)
 

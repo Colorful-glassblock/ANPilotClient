@@ -8,7 +8,6 @@ import anpilot.client.features.event.impl.PacketEvent
 import anpilot.client.features.event.impl.Render3DEvent
 import anpilot.client.features.module.ANBaseModule
 import anpilot.client.features.setting.ANSetting
-import anpilot.client.features.setting.impl.Bind
 import anpilot.client.renderer.ANColor
 import anpilot.client.renderer.render.ANRender3DEngine
 import net.minecraft.client.multiplayer.ClientLevel
@@ -22,10 +21,8 @@ import net.minecraft.world.level.Level
 import net.minecraft.world.level.biome.Biome
 import net.minecraft.world.level.block.Blocks
 import baritone.api.BaritoneAPI
-import net.minecraft.world.level.chunk.ChunkAccess
 import net.minecraft.world.level.chunk.status.ChunkStatus
 import net.minecraft.world.level.levelgen.Heightmap
-import net.minecraft.world.level.levelgen.LegacyRandomSource
 import net.minecraft.world.level.levelgen.WorldgenRandom
 import net.minecraft.world.phys.AABB
 import net.minecraft.world.phys.Vec3
@@ -36,7 +33,7 @@ import net.minecraft.core.Direction
 
 class ANOreMiner : ANBaseModule(
     name = "ANOreMiner",
-    description = "使用种子来获取矿物位置，反服务反矿透",
+    description = "使用种子来获取矿物位置，反服务反矿透并进行全自动挖掘",
     category = ANModuleCategory.MISC,
     chineseName = "种子矿透",
 ) {
@@ -232,16 +229,22 @@ class ANOreMiner : ANBaseModule(
         val chunkKey = (chunkPos.x.toLong() and 0xFFFFFFFFL) or (chunkPos.z.toLong() and 0xFFFFFFFFL shl 32)
         if (chunkRenderers.containsKey(chunkKey)) return
         
-        val chunk = world.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.BIOMES, false) ?: return
+        val chunk = world.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.FULL, false)
+            ?: world.getChunk(chunkPos.x, chunkPos.z, ChunkStatus.BIOMES, false)
+            ?: return
         
         val biomes = mutableSetOf<ResourceKey<Biome>>()
         for (section in chunk.sections) {
-            section.biomes?.getAll { entry -> biomes.add(entry.unwrapKey().get()) }
+            section.biomes.getAll { entry -> entry.unwrapKey().orElse(null)?.let { biomes.add(it) } }
         }
         
         val oreSet = mutableSetOf<ANOreConfig>()
-        for (b in biomes) {
-            oreSet.addAll(getDefaultOres(b, config))
+        for (biome in biomes) {
+            oreSet.addAll(getDefaultOres(biome, config))
+        }
+        if (oreSet.isEmpty()) {
+            chunkRenderers[chunkKey] = emptyMap()
+            return
         }
         
         val chunkX = chunkPos.x shl 4
@@ -259,11 +262,11 @@ class ANOreMiner : ANBaseModule(
                 if (ore.rarity != 1f && random.nextFloat() >= 1f / ore.rarity) continue
                 val px = random.nextInt(16) + chunkX
                 val pz = random.nextInt(16) + chunkZ
-                val py = ore.heightProvider?.sample(random, ore.heightContext) ?: 0
+                val py = sampleOreY(world, ore, random)
                 val origin = BlockPos(px, py, pz)
                 
-                val biome = chunk.getNoiseBiome(px shr 2, py shr 2, pz shr 2).unwrapKey().get()
-                if (!getDefaultOres(biome, config).contains(ore)) continue
+                val biome = chunk.getNoiseBiome(px shr 2, py shr 2, pz shr 2).unwrapKey().orElse(null)
+                if (biome != null && !getDefaultOres(biome, config).contains(ore)) continue
                 
                 if (ore.scattered) {
                     ores.addAll(generateHidden(world, random, origin, ore.size))
@@ -372,7 +375,7 @@ class ANOreMiner : ANBaseModule(
                                         if (!bitSet.get(an)) {
                                             bitSet.set(an)
                                             mutable.set(ah, aj, al)
-                                            if (aj >= -64 && aj < 320 && world.getBlockState(mutable).isSolidRender()) {
+                                            if (isValidY(world, aj) && world.getBlockState(mutable).isSolidRender()) {
                                                 if (shouldPlace(world, mutable, discardOnAir, random)) {
                                                     poses.add(Vec3(ah.toDouble(), aj.toDouble(), al.toDouble()))
                                                 }
@@ -397,11 +400,9 @@ class ANOreMiner : ANBaseModule(
             val x = randomCoord(random, sz) + blockPos.x
             val y = randomCoord(random, sz) + blockPos.y
             val z = randomCoord(random, sz) + blockPos.z
-            val p = BlockPos(x, y, z)
-            if (world.getBlockState(p).isSolidRender()) {
-                if (shouldPlace(world, p, 1f, random)) {
-                    poses.add(Vec3(x.toDouble(), y.toDouble(), z.toDouble()))
-                }
+            val pos = BlockPos(x, y, z)
+            if (isValidY(world, y) && world.getBlockState(pos).isSolidRender()) {
+                poses.add(Vec3(x.toDouble(), y.toDouble(), z.toDouble()))
             }
         }
         return poses
@@ -409,6 +410,35 @@ class ANOreMiner : ANBaseModule(
 
     private fun randomCoord(random: WorldgenRandom, size: Int): Int {
         return Math.round((random.nextFloat() - random.nextFloat()) * size.toFloat())
+    }
+
+    private fun sampleOreY(world: ClientLevel, ore: ANOreConfig, random: WorldgenRandom): Int {
+        val context = ore.heightContext
+        if (context != null) {
+            ore.heightProvider?.let { provider ->
+                runCatching { provider.sample(random, context) }.getOrNull()?.let { return it }
+            }
+        }
+
+        val minY = world.minY
+        val maxY = world.minY + world.dimensionType().logicalHeight() - 1
+        val range = when (ore.active.name) {
+            "Ancient Debris" -> 8 to 22
+            "Quartz" -> 10 to 117
+            "Gold" -> if (world.dimension() == Level.NETHER) 10 to 117 else -64 to 32
+            "Diamond", "Redstone", "Lapis" -> -64 to 16
+            "Iron", "Copper" -> -24 to 80
+            "Coal" -> 0 to 160
+            "Emerald" -> -16 to 256
+            else -> minY to maxY
+        }
+        val from = range.first.coerceIn(minY, maxY)
+        val to = range.second.coerceIn(minY, maxY).coerceAtLeast(from)
+        return from + random.nextInt(to - from + 1)
+    }
+
+    private fun isValidY(world: ClientLevel, y: Int): Boolean {
+        return y >= world.minY && y < world.minY + world.dimensionType().logicalHeight()
     }
 
     private fun shouldPlace(world: ClientLevel, orePos: BlockPos, discardOnAir: Float, random: WorldgenRandom): Boolean {

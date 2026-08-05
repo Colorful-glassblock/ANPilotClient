@@ -17,7 +17,7 @@ class ANXRay : ANBaseModule(
     name = "XRay",
     description = "隐藏普通泥土与石头方块，透视渲染矿石与目标方块",
     category = ANModuleCategory.RENDER,
-    chineseName = "透视"
+    chineseName = "矿透"
 ) {
     companion object {
         val ORES = listOf(

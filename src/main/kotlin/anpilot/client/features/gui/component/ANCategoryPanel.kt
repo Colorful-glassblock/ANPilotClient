@@ -2,8 +2,10 @@ package anpilot.client.features.gui.component
 
 import anpilot.client.api.gui.ANGuiRenderContext
 import anpilot.client.api.module.ANModuleCategory
+import anpilot.client.features.gui.ANDecorTextureManager
 import anpilot.client.features.module.ANBaseModule
 import anpilot.client.features.module.anpilot.ANTheme
+import anpilot.client.renderer.render.ANProceduralDecorRenderer
 import net.minecraft.client.Minecraft
 import java.awt.Color
 
@@ -155,6 +157,26 @@ class ANCategoryPanel(
 
     private fun drawPanel(context: ANGuiRenderContext, x: Float, y: Float, width: Float, height: Float) {
         context.borderedRoundedRect(x, y, width, height, ANTheme.PanelRadius, ANTheme.PanelBorderWidth, ANTheme.PanelFill, ANTheme.PanelBorder)
+        if (!ANTheme.DecorEnabled) return
+        context.roundedBorderDecor(
+            ANDecorTextureManager.texture(ANTheme.DecorFile),
+            x,
+            y,
+            width,
+            height,
+            ANTheme.PanelRadius,
+            ANProceduralDecorRenderer.RoundedBorderDecorOptions(
+                baseSize = ANTheme.DecorSize,
+                density = ANTheme.DecorDensity,
+                minScale = minOf(ANTheme.DecorMinScale, ANTheme.DecorMaxScale),
+                maxScale = maxOf(ANTheme.DecorMinScale, ANTheme.DecorMaxScale),
+                rotationRandomDegrees = ANTheme.DecorRotation,
+                offset = ANTheme.DecorOffset,
+                seed = ANTheme.DecorSeed + category.ordinal,
+                color = ANTheme.DecorColor.rgb,
+                maxInstances = 64
+            )
+        )
     }
 
     private val ANModuleCategory.displayName: String

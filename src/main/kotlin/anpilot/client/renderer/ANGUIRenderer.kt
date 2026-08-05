@@ -1,6 +1,7 @@
 package anpilot.client.renderer
 
 import anpilot.client.renderer.render.ANRender2DEngine
+import anpilot.client.renderer.render.ANProceduralDecorRenderer
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.navigation.ScreenRectangle
 import net.minecraft.client.gui.screens.inventory.InventoryScreen
@@ -42,6 +43,24 @@ object ANGUIRenderer {
 
     fun imageRect(context: GuiGraphicsExtractor, texture: Identifier, x: Float, y: Float, width: Float, height: Float, color: Color, scissorArea: ScreenRectangle? = null) {
         ANRender2DEngine.imageRect(context, texture, x, y, width, height, color.rgb, scissorArea)
+    }
+
+    fun roundedImageRect(context: GuiGraphicsExtractor, texture: Identifier, x: Float, y: Float, width: Float, height: Float, radius: Float, color: Color, scissorArea: ScreenRectangle? = null) {
+        ANRender2DEngine.roundedImageRect(context, texture, x, y, width, height, radius, color.rgb, scissorArea)
+    }
+
+    fun roundedBorderDecor(
+        context: GuiGraphicsExtractor,
+        texture: Identifier,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        radius: Float,
+        options: ANProceduralDecorRenderer.RoundedBorderDecorOptions,
+        scissorArea: ScreenRectangle? = null
+    ) {
+        ANProceduralDecorRenderer.roundedBorderDecor(context, texture, x, y, width, height, radius, options, scissorArea)
     }
 
     fun imageRect(

@@ -11,6 +11,7 @@ import net.minecraft.util.valueproviders.ConstantInt
 import net.minecraft.util.valueproviders.IntProvider
 import net.minecraft.world.level.LevelHeightAccessor
 import net.minecraft.world.level.biome.Biome
+import net.minecraft.world.level.biome.Biomes
 import net.minecraft.world.level.biome.FeatureSorter
 import net.minecraft.world.level.chunk.ChunkGenerator
 import net.minecraft.world.level.dimension.LevelStem
@@ -52,45 +53,54 @@ object ANOres {
 }
 
 class ANOreConfig(
-    val feature: PlacedFeature,
+    val feature: PlacedFeature?,
     val step: Int,
     val index: Int,
     val active: ANSetting<Boolean>,
     val color: Int,
-    val generator: ChunkGenerator
+    generator: ChunkGenerator?,
+    manualCount: IntProvider = ConstantInt.of(1),
+    manualSize: Int = 0,
+    manualRarity: Float = 1f,
+    manualScattered: Boolean = false
 ) {
-    var count: IntProvider = ConstantInt.of(1)
+    var count: IntProvider = manualCount
     var heightProvider: HeightProvider? = null
-    var heightContext: WorldGenerationContext
-    var rarity: Float = 1f
+    var heightContext: WorldGenerationContext? = null
+    var rarity: Float = manualRarity
     var discardOnAirChance: Float = 0f
-    var size: Int = 0
-    var scattered: Boolean = false
+    var size: Int = manualSize
+    var scattered: Boolean = manualScattered
 
     init {
         val bottom = Minecraft.getInstance().level?.minY ?: -64
-        val height = Minecraft.getInstance().level?.dimensionType()?.logicalHeight() ?: 384
-        this.heightContext = WorldGenerationContext(generator, LevelHeightAccessor.create(bottom, height))
+        val height = Minecraft.getInstance().level?.height
+            ?: Minecraft.getInstance().level?.dimensionType()?.logicalHeight()
+            ?: 384
+        this.heightContext = createHeightContext(generator, bottom, height)
 
-        for (modifier in feature.placement()) {
-            if (modifier is CountPlacement) {
-                count = getFieldValue(modifier, IntProvider::class.java) as? IntProvider ?: count
-            } else if (modifier is HeightRangePlacement) {
-                heightProvider = getFieldValue(modifier, HeightProvider::class.java) as? HeightProvider
-            } else if (modifier is RarityFilter) {
-                val r = getFieldValue(modifier, Int::class.javaPrimitiveType!!) as? Int ?: 1
-                rarity = r.toFloat()
+        val placementFeature = feature
+        if (placementFeature != null) {
+            for (modifier in placementFeature.placement()) {
+                if (modifier is CountPlacement) {
+                    count = getFieldValue(modifier, IntProvider::class.java) as? IntProvider ?: count
+                } else if (modifier is HeightRangePlacement) {
+                    heightProvider = getFieldValue(modifier, HeightProvider::class.java) as? HeightProvider
+                } else if (modifier is RarityFilter) {
+                    val r = getFieldValue(modifier, Int::class.javaPrimitiveType!!) as? Int ?: 1
+                    rarity = r.toFloat()
+                }
             }
-        }
 
-        val featureConfig = feature.feature().value().config()
-        if (featureConfig is OreConfiguration) {
-            this.discardOnAirChance = featureConfig.discardChanceOnAirExposure
-            this.size = featureConfig.size
-        }
+            val featureConfig = placementFeature.feature().value().config()
+            if (featureConfig is OreConfiguration) {
+                this.discardOnAirChance = featureConfig.discardChanceOnAirExposure
+                this.size = featureConfig.size
+            }
 
-        if (feature.feature().value().feature() is ScatteredOreFeature) {
-            this.scattered = true
+            if (placementFeature.feature().value().feature() is ScatteredOreFeature) {
+                this.scattered = true
+            }
         }
     }
 
@@ -101,8 +111,135 @@ class ANOreConfig(
     }
 
     companion object {
+        var lastError: String? = null
+            private set
+        var lastSource: String = "none"
+            private set
+
+        private fun createHeightContext(generator: ChunkGenerator?, bottom: Int, height: Int): WorldGenerationContext? {
+            return if (generator != null) {
+                runCatching {
+                    WorldGenerationContext(generator, LevelHeightAccessor.create(bottom, height))
+                }.getOrNull()
+            } else runCatching {
+                val ctor = WorldGenerationContext::class.java.constructors.first()
+                ctor.newInstance(null, LevelHeightAccessor.create(bottom, height)) as WorldGenerationContext
+            }.getOrNull()
+        }
+
         fun getRegistry(dimension: OreDimension): Map<ResourceKey<Biome>, List<ANOreConfig>> {
-            val registry: HolderLookup.Provider = VanillaRegistries.createLookup()
+            lastError = null
+            lastSource = "none"
+
+            val vanillaRegistry = runCatching { VanillaRegistries.createLookup() }
+                .onFailure { lastError = "vanilla-lookup:${it.javaClass.simpleName}:${it.message}" }
+                .getOrNull()
+            vanillaRegistry?.let { registry ->
+                val result = runCatching { getRegistry(dimension, registry) }
+                    .onFailure { lastError = "vanilla:${it.javaClass.simpleName}:${it.message}" }
+                    .getOrNull()
+                if (!result.isNullOrEmpty() && result.values.sumOf { it.size } > 0) {
+                    lastError = null
+                    lastSource = "vanilla"
+                    return result
+                }
+            }
+
+            val currentWorldRegistry: HolderLookup.Provider? = Minecraft.getInstance().level?.registryAccess()
+            currentWorldRegistry?.let { provider ->
+                val worldResult = runCatching { getRegistryFromWorld(dimension, provider) }
+                    .onFailure { lastError = "world-direct:${it.javaClass.simpleName}:${it.message}" }
+                    .getOrNull()
+                if (!worldResult.isNullOrEmpty() && worldResult.values.sumOf { it.size } > 0) {
+                    lastError = null
+                    lastSource = "world-direct"
+                    return worldResult
+                }
+                if (lastError == null) {
+                    lastError = "world-direct:empty"
+                }
+            }
+
+            manualFallback(dimension).takeIf { it.values.sumOf { ores -> ores.size } > 0 }?.let {
+                lastError = null
+                lastSource = "manual-fallback"
+                return it
+            }
+            return emptyMap()
+        }
+
+        private fun manualFallback(dimension: OreDimension): Map<ResourceKey<Biome>, List<ANOreConfig>> {
+            val ores = when (dimension) {
+                OreDimension.Nether -> listOf(
+                    ANOreConfig(null, 7, 0, ANOres.GOLD.setting, ANOres.GOLD.color, null, ConstantInt.of(10), 10),
+                    ANOreConfig(null, 7, 1, ANOres.DEBRIS.setting, ANOres.DEBRIS.color, null, ConstantInt.of(1), 3),
+                    ANOreConfig(null, 7, 2, ANOres.DEBRIS.setting, ANOres.DEBRIS.color, null, ConstantInt.of(2), 2)
+                )
+                OreDimension.Overworld -> listOf(
+                    ANOreConfig(null, 6, 0, ANOres.DIAMOND.setting, ANOres.DIAMOND.color, null, ConstantInt.of(7), 8),
+                    ANOreConfig(null, 6, 1, ANOres.REDSTONE.setting, ANOres.REDSTONE.color, null, ConstantInt.of(8), 8),
+                    ANOreConfig(null, 6, 2, ANOres.GOLD.setting, ANOres.GOLD.color, null, ConstantInt.of(4), 9),
+                    ANOreConfig(null, 6, 3, ANOres.IRON.setting, ANOres.IRON.color, null, ConstantInt.of(10), 9),
+                    ANOreConfig(null, 6, 4, ANOres.COAL.setting, ANOres.COAL.color, null, ConstantInt.of(20), 17)
+                )
+                OreDimension.End -> emptyList()
+            }
+            if (ores.isEmpty()) return emptyMap()
+
+            val biomeKeys = Minecraft.getInstance().level?.registryAccess()
+                ?.lookupOrThrow(Registries.BIOME)
+                ?.listElementIds()
+                ?.toList()
+                .orEmpty()
+                .ifEmpty {
+                    if (dimension == OreDimension.Nether) listOf(Biomes.NETHER_WASTES) else emptyList()
+                }
+            return biomeKeys.associateWith { ores }
+        }
+
+        private fun getRegistryFromWorld(dimension: OreDimension, registry: HolderLookup.Provider): Map<ResourceKey<Biome>, List<ANOreConfig>> {
+            val features = registry.lookupOrThrow(Registries.PLACED_FEATURE)
+            val biomes = registry.lookupOrThrow(Registries.BIOME).listElements().toList()
+            if (biomes.isEmpty()) return emptyMap()
+
+            val candidates = mutableListOf<Triple<PlacedFeature, Int, ANOreSetting>>()
+            registerByDimension(dimension) { key, step, setting ->
+                val placement = features.get(key).orElse(null)?.value() ?: return@registerByDimension
+                candidates.add(Triple(placement, step, setting))
+            }
+            if (candidates.isEmpty()) {
+                lastError = "world-direct:no registered placed features"
+                return emptyMap()
+            }
+
+            val candidateFeatures = candidates.mapTo(mutableSetOf()) { it.first }
+            val dimensionBiomes = biomes.filter { biome ->
+                biome.value().generationSettings.features().any { holderSet ->
+                    holderSet.any { holder -> holder.value() in candidateFeatures }
+                }
+            }
+            if (dimensionBiomes.isEmpty()) {
+                lastError = "world-direct:no dimension biomes"
+                return emptyMap()
+            }
+
+            val indexer = FeatureSorter.buildFeaturesPerStep(dimensionBiomes, { it.value().generationSettings.features() }, true)
+            val featureToOre = mutableMapOf<PlacedFeature, ANOreConfig>()
+
+            for ((placement, step, setting) in candidates) {
+                if (step >= indexer.size) continue
+                val index = indexer[step].indexMapping().applyAsInt(placement)
+                if (index < 0) continue
+                featureToOre[placement] = ANOreConfig(placement, step, index, setting.setting, setting.color, null)
+            }
+
+            if (featureToOre.isEmpty()) {
+                lastError = "world-direct:no indexed placed features"
+            }
+            return biomeOreMap(dimensionBiomes, featureToOre)
+        }
+
+        private fun getRegistry(dimension: OreDimension, registry: HolderLookup.Provider): Map<ResourceKey<Biome>, List<ANOreConfig>> {
             val features = registry.lookupOrThrow(Registries.PLACED_FEATURE)
             val reg = registry.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.NORMAL).value().createWorldDimensions().dimensions()
 
@@ -124,6 +261,23 @@ class ANOreConfig(
                 featureToOre[placement] = ANOreConfig(placement, step, index, setting.setting, setting.color, dim.generator())
             }
 
+            registerByDimension(dimension, ::register)
+            return biomeOreMap(biomes, featureToOre)
+        }
+
+        private fun registerByDimension(dimension: OreDimension, register: (ResourceKey<PlacedFeature>, Int, ANOreSetting) -> Unit) {
+            if (dimension == OreDimension.Nether) {
+                register(OrePlacements.ORE_GOLD_NETHER, 7, ANOres.GOLD)
+                register(OrePlacements.ORE_GOLD_DELTAS, 7, ANOres.GOLD)
+                register(OrePlacements.ORE_QUARTZ_NETHER, 7, ANOres.QUARTZ)
+                register(OrePlacements.ORE_QUARTZ_DELTAS, 7, ANOres.QUARTZ)
+                register(OrePlacements.ORE_ANCIENT_DEBRIS_SMALL, 7, ANOres.DEBRIS)
+                register(OrePlacements.ORE_ANCIENT_DEBRIS_LARGE, 7, ANOres.DEBRIS)
+                return
+            }
+
+            if (dimension == OreDimension.End) return
+
             register(OrePlacements.ORE_COAL_LOWER, 6, ANOres.COAL)
             register(OrePlacements.ORE_COAL_UPPER, 6, ANOres.COAL)
             register(OrePlacements.ORE_IRON_MIDDLE, 6, ANOres.IRON)
@@ -132,8 +286,6 @@ class ANOreConfig(
             register(OrePlacements.ORE_GOLD, 6, ANOres.GOLD)
             register(OrePlacements.ORE_GOLD_LOWER, 6, ANOres.GOLD)
             register(OrePlacements.ORE_GOLD_EXTRA, 6, ANOres.GOLD)
-            register(OrePlacements.ORE_GOLD_NETHER, 7, ANOres.GOLD)
-            register(OrePlacements.ORE_GOLD_DELTAS, 7, ANOres.GOLD)
             register(OrePlacements.ORE_REDSTONE, 6, ANOres.REDSTONE)
             register(OrePlacements.ORE_REDSTONE_LOWER, 6, ANOres.REDSTONE)
             register(OrePlacements.ORE_DIAMOND, 6, ANOres.DIAMOND)
@@ -145,13 +297,10 @@ class ANOreConfig(
             register(OrePlacements.ORE_COPPER, 6, ANOres.COPPER)
             register(OrePlacements.ORE_COPPER_LARGE, 6, ANOres.COPPER)
             register(OrePlacements.ORE_EMERALD, 6, ANOres.EMERALD)
-            register(OrePlacements.ORE_QUARTZ_NETHER, 7, ANOres.QUARTZ)
-            register(OrePlacements.ORE_QUARTZ_DELTAS, 7, ANOres.QUARTZ)
-            register(OrePlacements.ORE_ANCIENT_DEBRIS_SMALL, 7, ANOres.DEBRIS)
-            register(OrePlacements.ORE_ANCIENT_DEBRIS_LARGE, 7, ANOres.DEBRIS)
+        }
 
+        private fun biomeOreMap(biomes: List<net.minecraft.core.Holder<Biome>>, featureToOre: Map<PlacedFeature, ANOreConfig>): Map<ResourceKey<Biome>, List<ANOreConfig>> {
             val biomeOreMap = mutableMapOf<ResourceKey<Biome>, List<ANOreConfig>>()
-
             for (biome in biomes) {
                 val list = mutableListOf<ANOreConfig>()
                 biome.value().generationSettings.features().forEach { holderSet ->
@@ -162,9 +311,8 @@ class ANOreConfig(
                         }
                     }
                 }
-                biomeOreMap[biome.unwrapKey().get()] = list
+                biome.unwrapKey().ifPresent { biomeOreMap[it] = list }
             }
-
             return biomeOreMap
         }
     }

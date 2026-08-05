@@ -1,6 +1,7 @@
-package anpilot.client.features.manager.rotation;
+package anpilot.client.features.manager.rotation
 
-public enum RotateMode
-{
-    GRIM, SILENT, OFF
+enum class RotateMode {
+    GRIM,
+    SILENT,
+    OFF
 }

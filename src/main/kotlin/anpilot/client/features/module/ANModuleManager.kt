@@ -15,6 +15,7 @@ import anpilot.client.features.module.combat.ANAutoCrystal
 import anpilot.client.features.module.combat.ANAutoMine
 import anpilot.client.features.module.combat.ANAnchorAura
 import anpilot.client.features.module.combat.ANAutoBed
+import anpilot.client.features.module.combat.ANBowAim
 import anpilot.client.features.module.combat.ANAutoTotem
 import anpilot.client.features.module.combat.ANFeetPlace
 import anpilot.client.features.module.combat.ANKillAura
@@ -37,6 +38,7 @@ import anpilot.client.features.module.misc.ANAntiCrash
 import anpilot.client.features.module.misc.ANBotTask
 import anpilot.client.features.module.misc.ANAutoLog
 import anpilot.client.features.module.misc.ANAutoEnchantBook
+import anpilot.client.features.module.misc.ANAutoFarm
 import anpilot.client.features.module.misc.ANAutoFish
 import anpilot.client.features.module.misc.ANAutoFeed
 import anpilot.client.features.module.misc.ANBaseFinder
@@ -130,6 +132,7 @@ class ANModuleManager : ANModuleRegistry {
         ANAutoMine(),
         ANAnchorAura(),
         ANAutoBed(),
+        ANBowAim(),
         ANAutoTotem(),
         ANFeetPlace(),
         ANPopCount(),
@@ -198,6 +201,7 @@ class ANModuleManager : ANModuleRegistry {
         ANBotTask(),
         ANPlanMove(),
         ANAutoEnchantBook(),
+        ANAutoFarm(),
         ANAutoFish(),
         ANNotifier(),
         ANChatUtils(),

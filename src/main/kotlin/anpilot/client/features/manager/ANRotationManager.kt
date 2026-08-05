@@ -29,7 +29,7 @@ import net.minecraft.world.item.Items
 import kotlin.math.abs
 import kotlin.math.pow
 
-class RotationManager {
+class ANRotationManager {
     private val mc = Minecraft.getInstance()
     val controller = RotationController()
     val serverRotation: Rotation

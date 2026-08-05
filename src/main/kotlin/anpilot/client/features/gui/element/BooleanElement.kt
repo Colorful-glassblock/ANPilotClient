@@ -38,6 +38,7 @@ class BooleanElement(
     override fun mouseClicked(mouseX: Double, mouseY: Double, button: Int): Boolean {
         if (button != 0 || !isHovered(mouseX, mouseY)) return false
         setting.setValue(!setting.value)
+        (setting.module as? ANPilotGuiEditor)?.syncToTheme()
         return true
     }
 

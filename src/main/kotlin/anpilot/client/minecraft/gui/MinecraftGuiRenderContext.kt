@@ -3,6 +3,7 @@ package anpilot.client.minecraft.gui
 import anpilot.client.api.gui.ANGuiRenderContext
 import anpilot.client.renderer.ANGUIRenderer
 import anpilot.client.renderer.font.ANFontRenderer
+import anpilot.client.renderer.render.ANProceduralDecorRenderer
 import net.minecraft.client.gui.Font
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.navigation.ScreenRectangle
@@ -42,6 +43,10 @@ class MinecraftGuiRenderContext(
 
     override fun imageRect(texture: Identifier, x: Float, y: Float, width: Float, height: Float, color: Color) {
         ANGUIRenderer.imageRect(context, texture, x, y, width, height, color, scissorArea)
+    }
+
+    override fun roundedImageRect(texture: Identifier, x: Float, y: Float, width: Float, height: Float, radius: Float, color: Color) {
+        ANGUIRenderer.roundedImageRect(context, texture, x, y, width, height, radius, color, scissorArea)
     }
 
     override fun head(skin: PlayerSkin, x: Float, y: Float, size: Float, color: Color) {
@@ -87,6 +92,18 @@ class MinecraftGuiRenderContext(
 
     override fun roundedRectWithGlow(x: Float, y: Float, width: Float, height: Float, radius: Float, borderWidth: Float, fillColor: Color, borderColor: Color, glowRadius: Float, glowColor: Color) {
         ANGUIRenderer.roundedRectWithGlow(context, x, y, width, height, radius, borderWidth, fillColor, borderColor, glowRadius, glowColor, scissorArea)
+    }
+
+    override fun roundedBorderDecor(
+        texture: Identifier,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        radius: Float,
+        options: ANProceduralDecorRenderer.RoundedBorderDecorOptions
+    ) {
+        ANGUIRenderer.roundedBorderDecor(context, texture, x, y, width, height, radius, options, scissorArea)
     }
 
     override fun text(text: String, x: Float, y: Float, color: Int) {

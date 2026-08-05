@@ -2,6 +2,7 @@ package anpilot.client.features.gui.element
 
 import anpilot.client.api.gui.ANGuiRenderContext
 import anpilot.client.features.gui.component.ANElement
+import anpilot.client.features.module.anpilot.ANPilotGuiEditor
 import anpilot.client.features.module.anpilot.ANTheme
 import anpilot.client.features.setting.ANSetting
 import anpilot.client.features.setting.impl.FileSelectSetting
@@ -41,7 +42,7 @@ class FileSelectElement(
         val rows = visibleRows(files.size)
         if (files.isEmpty()) {
             context.borderedRoundedRect(x, listY, width, ROW_HEIGHT, RADIUS, BORDER, ANTheme.SelFill, ANTheme.SelBorder)
-            context.text("Put txt files in Files", x + 5f, listY + 6.5f, ANTheme.SetText.rgb, TEXT_SCALE)
+            context.text("Put files in folder", x + 5f, listY + 6.5f, ANTheme.SetText.rgb, TEXT_SCALE)
             return
         }
 
@@ -79,6 +80,7 @@ class FileSelectElement(
         if (row in 0 until visibleRows(files.size)) {
             setting.value.setFile(files[row])
             setting.setValue(setting.value)
+            (setting.module as? ANPilotGuiEditor)?.syncToTheme()
             expanded = false
             return true
         }

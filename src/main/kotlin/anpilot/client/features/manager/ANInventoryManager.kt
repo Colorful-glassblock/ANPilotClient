@@ -7,7 +7,7 @@ import anpilot.client.features.manager.inventory.InventoryElytra
 import anpilot.client.features.manager.inventory.InventorySearch
 import anpilot.client.features.manager.inventory.InventorySlot
 
-object InventoryManager {
+object ANInventoryManager {
 
     val core
         get() = Inventory

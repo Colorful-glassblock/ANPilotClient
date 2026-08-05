@@ -26,6 +26,20 @@ object ANVertexFormats {
         .add("Color", VertexFormatElement.COLOR)
         .build()
 
+    val DECOR_IMAGE: VertexFormat = VertexFormat.builder()
+        .add("Position", VertexFormatElement.POSITION)
+        .add("UV0", VertexFormatElement.UV0)
+        .add("Color", VertexFormatElement.COLOR)
+        .build()
+
+    val ROUNDED_IMAGE_RECTANGLE: VertexFormat = VertexFormat.builder()
+        .add("Position", VertexFormatElement.POSITION)
+        .add("UV0", VertexFormatElement.UV0)
+        .add("UV1", VertexFormatElement.UV1)
+        .add("UV2", VertexFormatElement.UV2)
+        .add("Color", VertexFormatElement.COLOR)
+        .build()
+
     val GRADIENT_RECTANGLE: VertexFormat = VertexFormat.builder()
         .add("Position", VertexFormatElement.POSITION)
         .add("Color", VertexFormatElement.COLOR)

@@ -48,6 +48,28 @@ object ANRenderPipelines {
             .build()
     )
 
+    val DECOR_IMAGE: RenderPipeline = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
+            .withLocation(id("pipeline/decor_image"))
+            .withVertexShader(id("core/decor_image"))
+            .withFragmentShader(id("core/decor_image"))
+            .withSampler("Sampler0")
+            .withVertexFormat(ANVertexFormats.DECOR_IMAGE, VertexFormat.Mode.QUADS)
+            .withUsePipelineDrawModeForGui(true)
+            .build()
+    )
+
+    val ROUNDED_IMAGE_RECTANGLE: RenderPipeline = RenderPipelines.register(
+        RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
+            .withLocation(id("pipeline/rounded_image_rect"))
+            .withVertexShader(id("core/rounded_image_rect"))
+            .withFragmentShader(id("core/rounded_image_rect"))
+            .withSampler("Sampler0")
+            .withVertexFormat(ANVertexFormats.ROUNDED_IMAGE_RECTANGLE, VertexFormat.Mode.QUADS)
+            .withUsePipelineDrawModeForGui(true)
+            .build()
+    )
+
     val GRADIENT_RECTANGLE: RenderPipeline = RenderPipelines.register(
         RenderPipeline.builder(RenderPipelines.GUI_SNIPPET)
             .withLocation(id("pipeline/gradient_rect"))

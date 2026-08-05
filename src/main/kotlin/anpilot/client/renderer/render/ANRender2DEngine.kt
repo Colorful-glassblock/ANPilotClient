@@ -1,10 +1,12 @@
 package anpilot.client.renderer.render
 
 import anpilot.client.renderer.render.state.BlurRenderState
+import anpilot.client.renderer.render.state.DecorImageRenderState
 import anpilot.client.renderer.render.state.GradientRectangleRenderState
 import anpilot.client.renderer.render.state.ImageRectangleRenderState
 import anpilot.client.renderer.render.state.RoundedBorderRectangleRenderState
 import anpilot.client.renderer.render.state.RoundedGradientRectangleRenderState
+import anpilot.client.renderer.render.state.RoundedImageRectangleRenderState
 import anpilot.client.renderer.render.state.RoundedRectangleRenderState
 import net.minecraft.client.gui.GuiGraphicsExtractor
 import net.minecraft.client.gui.navigation.ScreenRectangle
@@ -81,6 +83,82 @@ object ANRender2DEngine {
                 y,
                 width,
                 height,
+                u0,
+                v0,
+                u1,
+                v1,
+                color,
+                scissorArea
+            )
+        )
+    }
+
+    fun roundedImageRect(
+        context: GuiGraphicsExtractor,
+        texture: Identifier,
+        x: Float,
+        y: Float,
+        width: Float,
+        height: Float,
+        radius: Float,
+        color: Int,
+        scissorArea: ScreenRectangle? = null
+    ) {
+        if (width <= 0f || height <= 0f) return
+        context.guiRenderState.addGuiElement(
+            RoundedImageRectangleRenderState(
+                context.pose(),
+                texture,
+                x,
+                y,
+                width,
+                height,
+                radius,
+                color,
+                scissorArea
+            )
+        )
+    }
+
+    fun decorImage(
+        context: GuiGraphicsExtractor,
+        texture: Identifier,
+        centerX: Float,
+        centerY: Float,
+        width: Float,
+        height: Float,
+        rotationDegrees: Float,
+        color: Int,
+        scissorArea: ScreenRectangle? = null
+    ) {
+        decorImage(context, texture, centerX, centerY, width, height, rotationDegrees, 0f, 0f, 1f, 1f, color, scissorArea)
+    }
+
+    fun decorImage(
+        context: GuiGraphicsExtractor,
+        texture: Identifier,
+        centerX: Float,
+        centerY: Float,
+        width: Float,
+        height: Float,
+        rotationDegrees: Float,
+        u0: Float,
+        v0: Float,
+        u1: Float,
+        v1: Float,
+        color: Int,
+        scissorArea: ScreenRectangle? = null
+    ) {
+        if (width <= 0f || height <= 0f) return
+        context.guiRenderState.addGuiElement(
+            DecorImageRenderState(
+                context.pose(),
+                texture,
+                centerX,
+                centerY,
+                width,
+                height,
+                rotationDegrees,
                 u0,
                 v0,
                 u1,

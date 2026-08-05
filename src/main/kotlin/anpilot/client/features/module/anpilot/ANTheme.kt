@@ -25,61 +25,63 @@ object ANTheme {
 
     var BgTint: Color = White
         private set
-    var PanelFill: Color = Color(0xD9182434.toInt(), true)
+    var PanelFill: Color = Color(0xD93B1432.toInt(), true)
         private set
-    var PanelBorder: Color = Color(0xCC2F8CFF.toInt(), true)
+    var PanelBorder: Color = Color(0xD9FF8CC8.toInt(), true)
         private set
-    var PanelText: Color = Color(0xFF5CFFB3.toInt(), true)
-        private set
-
-    var BtnFill: Color = Color(0xCC1B324D.toInt(), true)
-        private set
-    var BtnBorder: Color = Color(0xCC2F8CFF.toInt(), true)
-        private set
-    var BtnHoverFill: Color = Color(0xE02A4F73.toInt(), true)
-        private set
-    var BtnOnFill: Color = Color(0xE025725A.toInt(), true)
-        private set
-    var BtnOnBorder: Color = Color(0xFF4EF2A7.toInt(), true)
-        private set
-    var BtnText: Color = Color(0xFFE6F6FF.toInt(), true)
-        private set
-    var BtnOffText: Color = Color(0xB8E6F6FF.toInt(), true)
-        private set
-    var BtnDot: Color = Color(0xFF4C7DAB.toInt(), true)
-        private set
-    var BtnOnDot: Color = Color(0xFF4EF2A7.toInt(), true)
-        private set
-    var DescFill: Color = Color(0xE6101824.toInt(), true)
-        private set
-    var DescText: Color = Color(0xFFD7E8F8.toInt(), true)
+    var PanelText: Color = Color(0xFFFFEAF6.toInt(), true)
         private set
 
-    var SetText: Color = Color(0xFFD7E8F8.toInt(), true)
+    var BtnFill: Color = Color(0xCC4A183C.toInt(), true)
         private set
-    var SetCtrlFill: Color = Color(0xCC16263A.toInt(), true)
+    var BtnBorder: Color = Color(0xD9FF8CC8.toInt(), true)
         private set
-    var SetCtrlBorder: Color = Color(0xCC2F8CFF.toInt(), true)
+    var BtnHoverFill: Color = Color(0xE0722A5B.toInt(), true)
         private set
-    var SetAccent: Color = Color(0xFF4EF2A7.toInt(), true)
+    var BtnOnFill: Color = Color(0xE0E13B8B.toInt(), true)
         private set
-    var SetMutedText: Color = Color(0x99D7E8F8.toInt(), true)
+    var BtnOnBorder: Color = Color(0xFFFFA6D8.toInt(), true)
+        private set
+    var BtnText: Color = Color(0xFFFFEEF7.toInt(), true)
+        private set
+    var BtnOffText: Color = Color(0xC7FFEAF6.toInt(), true)
+        private set
+    var BtnDot: Color = Color(0xFFFF8CC8.toInt(), true)
+        private set
+    var BtnOnDot: Color = Color(0xFFFFD0EA.toInt(), true)
+        private set
+    var DescFill: Color = Color(0xE6260B20.toInt(), true)
+        private set
+    var DescText: Color = Color(0xFFFFEAF6.toInt(), true)
         private set
 
-    var SelFill: Color = Color(0xCC16263A.toInt(), true)
+    var SetText: Color = Color(0xFFFFEAF6.toInt(), true)
         private set
-    var SelBorder: Color = Color(0xCC2F8CFF.toInt(), true)
+    var SetCtrlFill: Color = Color(0xCC3A1230.toInt(), true)
         private set
-    var SelHoverFill: Color = Color(0xE02A4F73.toInt(), true)
+    var SetCtrlBorder: Color = Color(0xD9FF8CC8.toInt(), true)
         private set
-    var SelOnFill: Color = Color(0xE025725A.toInt(), true)
+    var SetAccent: Color = Color(0xFFFFA6D8.toInt(), true)
         private set
-    var SelOnBorder: Color = Color(0xFF4EF2A7.toInt(), true)
+    var SetMutedText: Color = Color(0xA6FFEAF6.toInt(), true)
+        private set
+
+    var SelFill: Color = Color(0xCC3A1230.toInt(), true)
+        private set
+    var SelBorder: Color = Color(0xD9FF8CC8.toInt(), true)
+        private set
+    var SelHoverFill: Color = Color(0xE0722A5B.toInt(), true)
+        private set
+    var SelOnFill: Color = Color(0xE0E13B8B.toInt(), true)
+        private set
+    var SelOnBorder: Color = Color(0xFFFFA6D8.toInt(), true)
         private set
 
     var PanelRadius: Float = 15f
         private set
     var BtnRadius: Float = 10f
+        private set
+    var BgRadius: Float = 18f
         private set
 
     var PanelBorderWidth: Float = 3f
@@ -87,8 +89,31 @@ object ANTheme {
     var BtnBorderWidth: Float = 1.5f
         private set
 
+    var DecorEnabled: Boolean = true
+        private set
+    var DecorFile: String = ""
+        private set
+    var DecorColor: Color = Color(0xFFFFEEF7.toInt(), true)
+        private set
+    var DecorDensity: Float = 0.22f
+        private set
+    var DecorSize: Float = 13f
+        private set
+    var DecorMinScale: Float = 0.65f
+        private set
+    var DecorMaxScale: Float = 1.25f
+        private set
+    var DecorRotation: Float = 55f
+        private set
+    var DecorOffset: Float = -1.5f
+        private set
+    var DecorSeed: Long = 13579L
+        private set
+
     private val colorMap = mutableMapOf<String, Int>()
     private val floatMap = mutableMapOf<String, Float>()
+    private val booleanMap = mutableMapOf<String, Boolean>()
+    private val stringMap = mutableMapOf<String, String>()
 
     fun updateFromSetting(themeKey: String?, colorValue: Int) {
         if (themeKey == null) return
@@ -102,18 +127,41 @@ object ANTheme {
         updateAllReferences()
     }
 
+    fun updateBooleanFromSetting(themeKey: String?, booleanValue: Boolean) {
+        if (themeKey == null) return
+        booleanMap[themeKey] = booleanValue
+        updateAllReferences()
+    }
+
+    fun updateStringFromSetting(themeKey: String?, stringValue: String) {
+        if (themeKey == null) return
+        stringMap[themeKey] = stringValue
+        updateAllReferences()
+    }
+
     fun getColor(themeKey: String): Color = Color(colorMap[themeKey] ?: defaultColor(themeKey).rgb, true)
 
     private fun updateAllReferences() {
         PanelRadius = floatMap["PanelRadius"] ?: floatMap["panelRadius"] ?: 15f
         BtnRadius = floatMap["BtnRadius"] ?: floatMap["btnRadius"] ?: 10f
+        BgRadius = floatMap["BgRadius"] ?: 18f
         PanelBorderWidth = floatMap["PanelBorderW"] ?: floatMap["panelBorderW"] ?: 3f
         BtnBorderWidth = floatMap["BtnBorderW"] ?: floatMap["btnBorderW"] ?: 1.5f
+        DecorEnabled = booleanMap["Decor"] ?: true
+        DecorFile = stringMap["DecorFile"].orEmpty()
+        DecorDensity = floatMap["DecorDensity"] ?: 0.22f
+        DecorSize = floatMap["DecorSize"] ?: 13f
+        DecorMinScale = floatMap["DecorMinScale"] ?: 0.65f
+        DecorMaxScale = floatMap["DecorMaxScale"] ?: 1.25f
+        DecorRotation = floatMap["DecorRotation"] ?: 55f
+        DecorOffset = floatMap["DecorOffset"] ?: -1.5f
+        DecorSeed = (floatMap["DecorSeed"] ?: 13579f).toLong()
 
         BgTint = getColor("BgTint")
         PanelFill = getColor("PanelFill")
         PanelBorder = getColor("PanelBorder")
         PanelText = getColor("PanelText")
+        DecorColor = getColor("DecorColor")
 
         BtnFill = getColor("BtnFill")
         BtnBorder = getColor("BtnBorder")
@@ -142,30 +190,31 @@ object ANTheme {
 
     private fun defaultColor(themeKey: String): Color = when (themeKey) {
         "BgTint" -> White
-        "PanelFill" -> Color(0xD9182434.toInt(), true)
-        "PanelBorder" -> Color(0xCC2F8CFF.toInt(), true)
-        "PanelText" -> Color(0xFF5CFFB3.toInt(), true)
-        "BtnFill" -> Color(0xCC1B324D.toInt(), true)
-        "BtnBorder" -> Color(0xCC2F8CFF.toInt(), true)
-        "BtnHoverFill" -> Color(0xE02A4F73.toInt(), true)
-        "BtnOnFill" -> Color(0xE025725A.toInt(), true)
-        "BtnOnBorder" -> Color(0xFF4EF2A7.toInt(), true)
-        "BtnText" -> Color(0xFFE6F6FF.toInt(), true)
-        "BtnOffText" -> Color(0xB8E6F6FF.toInt(), true)
-        "BtnDot" -> Color(0xFF4C7DAB.toInt(), true)
-        "BtnOnDot" -> Color(0xFF4EF2A7.toInt(), true)
-        "DescFill" -> Color(0xE6101824.toInt(), true)
-        "DescText" -> Color(0xFFD7E8F8.toInt(), true)
-        "SetText" -> Color(0xFFD7E8F8.toInt(), true)
-        "SetCtrlFill" -> Color(0xCC16263A.toInt(), true)
-        "SetCtrlBorder" -> Color(0xCC2F8CFF.toInt(), true)
-        "SetAccent" -> Color(0xFF4EF2A7.toInt(), true)
-        "SetMutedText" -> Color(0x99D7E8F8.toInt(), true)
-        "SelFill" -> Color(0xCC16263A.toInt(), true)
-        "SelBorder" -> Color(0xCC2F8CFF.toInt(), true)
-        "SelHoverFill" -> Color(0xE02A4F73.toInt(), true)
-        "SelOnFill" -> Color(0xE025725A.toInt(), true)
-        "SelOnBorder" -> Color(0xFF4EF2A7.toInt(), true)
+        "PanelFill" -> Color(0xD93B1432.toInt(), true)
+        "PanelBorder" -> Color(0xD9FF8CC8.toInt(), true)
+        "PanelText" -> Color(0xFFFFEAF6.toInt(), true)
+        "BtnFill" -> Color(0xCC4A183C.toInt(), true)
+        "BtnBorder" -> Color(0xD9FF8CC8.toInt(), true)
+        "BtnHoverFill" -> Color(0xE0722A5B.toInt(), true)
+        "BtnOnFill" -> Color(0xE0E13B8B.toInt(), true)
+        "BtnOnBorder" -> Color(0xFFFFA6D8.toInt(), true)
+        "BtnText" -> Color(0xFFFFEEF7.toInt(), true)
+        "BtnOffText" -> Color(0xC7FFEAF6.toInt(), true)
+        "BtnDot" -> Color(0xFFFF8CC8.toInt(), true)
+        "BtnOnDot" -> Color(0xFFFFD0EA.toInt(), true)
+        "DescFill" -> Color(0xE6260B20.toInt(), true)
+        "DescText" -> Color(0xFFFFEAF6.toInt(), true)
+        "SetText" -> Color(0xFFFFEAF6.toInt(), true)
+        "SetCtrlFill" -> Color(0xCC3A1230.toInt(), true)
+        "SetCtrlBorder" -> Color(0xD9FF8CC8.toInt(), true)
+        "SetAccent" -> Color(0xFFFFA6D8.toInt(), true)
+        "SetMutedText" -> Color(0xA6FFEAF6.toInt(), true)
+        "SelFill" -> Color(0xCC3A1230.toInt(), true)
+        "SelBorder" -> Color(0xD9FF8CC8.toInt(), true)
+        "SelHoverFill" -> Color(0xE0722A5B.toInt(), true)
+        "SelOnFill" -> Color(0xE0E13B8B.toInt(), true)
+        "SelOnBorder" -> Color(0xFFFFA6D8.toInt(), true)
+        "DecorColor" -> Color(0xFFFFEEF7.toInt(), true)
         else -> White
     }
 }
